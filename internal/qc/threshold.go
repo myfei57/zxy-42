@@ -37,10 +37,16 @@ func (s *ThresholdService) ForFirmware(version string) (*ThresholdTable, error) 
 }
 
 // Evaluate judges a measured value against the threshold table of the
-// device's current firmware, never against the version bound at plan
-// creation.
+// device's current firmware, never against the version snapshot bound at plan
+// creation. A device upgraded after the plan was created must be judged against
+// the upgraded firmware's thresholds; binding the snapshot to evaluation would
+// let stale thresholds brand in-spec devices as failed.
 func (s *ThresholdService) Evaluate(plan *Plan, dev *device.Device, parameter string, value float64) (Verdict, error) {
-	version := plan.ThresholdVersion
+	// plan.ThresholdVersion is the audit-trail snapshot only. Live evaluation
+	// must follow the device's current firmware so an upgrade is reflected on
+	// the next QC run instead of reusing stale, pre-upgrade thresholds.
+	_ = plan
+	version := dev.Firmware.Current()
 	table, err := s.ForFirmware(version)
 	if err != nil {
 		return Verdict{}, err
