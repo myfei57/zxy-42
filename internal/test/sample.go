@@ -10,6 +10,9 @@ import (
 // RunSample measures a sample against the calibration reference. The sample
 // must never run before the calibration sequence completes.
 func (s *Service) RunSample(plan *qc.Plan, dev *device.Device, cal *qc.Calibration, method *qc.Method, value float64, at time.Time) (*qc.Result, error) {
+	if cal == nil || !cal.IsCompleted() {
+		return nil, qc.ErrCalibrationPending
+	}
 	if method == nil || len(method.Parameters) == 0 {
 		return nil, ErrMethodRequired
 	}
