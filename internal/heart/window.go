@@ -21,9 +21,12 @@ func NewWindow(interval, tolerance time.Duration) *Window {
 }
 
 // Evaluate reports whether the beat falls inside the live clock window.
+// The window is anchored on the current clock so it tracks real traffic;
+// the enrollment baseline must never anchor this judgement, otherwise a
+// clock correction freezes the window and live beats drift out of it.
 func (w *Window) Evaluate(clock Clock, beat Beat) bool {
-	baseline := clock.Baseline()
-	earliest := baseline.Add(-w.Interval)
-	latest := baseline.Add(w.Tolerance)
+	anchor := clock.Current()
+	earliest := anchor.Add(-w.Interval)
+	latest := anchor.Add(w.Tolerance)
 	return !beat.SentAt.Before(earliest) && !beat.SentAt.After(latest)
 }
