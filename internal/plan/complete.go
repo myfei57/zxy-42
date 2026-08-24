@@ -7,12 +7,12 @@ import (
 )
 
 // Complete finishes a maintenance intervention: the device lockout is cleared
-// first, then the device is activated and the plan is marked completed.
+// and the device is reactivated as one step, then the plan is marked completed.
 func (s *Service) Complete(plan *Plan, dev *device.Device, at time.Time) error {
 	if plan.Status != StatusInProgress {
 		return ErrPlanNotInProgress
 	}
-	if err := dev.Activate(at); err != nil {
+	if err := dev.EndMaintenance(at); err != nil {
 		return err
 	}
 	plan.Status = StatusCompleted

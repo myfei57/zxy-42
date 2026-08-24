@@ -19,3 +19,13 @@ func (d *Device) BeginMaintenance(reason string, at time.Time) error {
 	d.Lockout.Set(reason, at)
 	return nil
 }
+
+// EndMaintenance releases the maintenance lockout and returns the device to
+// clinical use in a single step. Clearing the lockout and reactivating the
+// device must happen together: completing maintenance without releasing the
+// lockout leaves the device stuck in maintenance with no path back to in-use,
+// so the release and the status transition are not separable.
+func (d *Device) EndMaintenance(at time.Time) error {
+	d.Lockout.Clear()
+	return d.Activate(at)
+}

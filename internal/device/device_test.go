@@ -56,11 +56,36 @@ func TestLockoutBlocksActivation(t *testing.T) {
 	if err := dev.Activate(at.Add(2 * time.Minute)); err == nil {
 		t.Fatal("activation with active lockout accepted")
 	}
-	dev.Lockout.Clear()
-	if err := dev.Activate(at.Add(3 * time.Minute)); err != nil {
-		t.Fatalf("activation after lockout clear failed: %v", err)
+	if err := dev.EndMaintenance(at.Add(3 * time.Minute)); err != nil {
+		t.Fatalf("end maintenance failed: %v", err)
+	}
+	if dev.Lockout.IsActive() {
+		t.Fatal("lockout still active after end maintenance")
 	}
 	if dev.Status != device.StatusInUse {
-		t.Fatalf("expected in-use after activation, got %s", dev.Status)
+		t.Fatalf("expected in-use after end maintenance, got %s", dev.Status)
+	}
+}
+
+func TestEndMaintenanceClearsLockoutAndReactivates(t *testing.T) {
+	at := time.Date(2026, 8, 1, 8, 0, 0, 0, time.UTC)
+	dev, err := device.NewDevice("SN-003", "M-1", "监护仪", "H1", "W1", device.ClassificationGeneral, at)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := dev.Activate(at); err != nil {
+		t.Fatal(err)
+	}
+	if err := dev.BeginMaintenance("scheduled service", at.Add(time.Minute)); err != nil {
+		t.Fatal(err)
+	}
+	if err := dev.EndMaintenance(at.Add(2 * time.Minute)); err != nil {
+		t.Fatalf("end maintenance failed: %v", err)
+	}
+	if dev.Lockout.IsActive() {
+		t.Fatal("lockout must be cleared on maintenance completion")
+	}
+	if dev.Status != device.StatusInUse {
+		t.Fatalf("device must be back in-use after maintenance, got %s", dev.Status)
 	}
 }
