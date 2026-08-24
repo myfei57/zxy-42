@@ -30,7 +30,11 @@ func (s *MethodService) ForFirmware(version string) (*Method, error) {
 	return nil, fmt.Errorf("%w: %s", ErrMethodNotFound, version)
 }
 
-// Resolve binds the QC method to the device's current firmware version.
+// Resolve binds the QC method to the device's current firmware, never to the
+// version snapshotted at plan creation. Upgrading device firmware must switch
+// the live method even on plans created under the old firmware; otherwise the
+// report fields lag the new firmware's required parameters.
 func (s *MethodService) Resolve(plan *Plan, dev *device.Device) (*Method, error) {
-	return s.ForFirmware(plan.MethodVersion)
+	version := dev.Firmware.Current()
+	return s.ForFirmware(version)
 }
