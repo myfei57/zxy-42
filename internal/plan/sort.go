@@ -36,7 +36,7 @@ func FromPlans(plans []*Plan) []Item {
 // next, so high-risk devices are never pushed behind low-risk ones.
 func SortItems(items []Item) []Item {
 	sort.SliceStable(items, func(i, j int) bool {
-		return items[i].Due.Before(items[j].Due)
+		return Compare(items[i], items[j]) < 0
 	})
 	return items
 }
